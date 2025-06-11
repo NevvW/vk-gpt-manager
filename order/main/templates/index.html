@@ -1,0 +1,94 @@
+{% extends "baseGeneric.html" %}
+
+{% block title %}Настройки чат-менеджера{% endblock title %}
+
+{% block content %}
+    <header>
+        <a href="">
+            <div class="logout-icon" title="Выйти"></div>
+        </a>
+    </header>
+    <div class="container">
+        <form action="" , method="post">
+            {% csrf_token %}
+            <div class="row-num">
+                <div>
+                    <div class="title">Первое напоминание</div>
+                    <div class="label">(отсчитывается с последнего сообщения)</div>
+                </div>
+                <div class="inline-boxes">
+                    {{ form.interval_first }}
+                    ч.
+                </div>
+            </div>
+
+            <div class="row-num">
+                <div>
+                    <div class="title">Последнее напоминание</div>
+                    <div class="label">(отсчитывается с последнего сообщения)</div>
+                </div>
+                <div class="inline-boxes">
+                    {{ form.interval_second }}
+                    ч.
+                </div>
+            </div>
+
+            <div class="row">
+                <div class="title">Главный промпт для нейросети</div>
+                <div class="label">(поведение, тон общения)</div>
+                {{ form.agent_promt }}
+            </div>
+
+            <div class="row">
+                <div class="title">Данные для работы нейросети</div>
+                <div class="label">(цены, факт наличия, актуальные предложения)</div>
+                {{ form.promt }}
+            </div>
+
+            <div class="row">
+                <div class="title">Промпт для обращения к менеджеру</div>
+                <div class="label">(конкретные ситуации при которых нужен менеджер)</div>
+                {{ form.key_word }}
+            </div>
+
+            <div class="row">
+                <div class="title">Игнорировать сообщения содержащие слова</div>
+                <div class="label">(запятая как разделитель)</div>
+                {{ form.ban_word }}
+            </div>
+
+            <div class="row">
+                <div class="title">Текст первого напоминания</div>
+                <div class="label">(после первого игнорирования)</div>
+                {{ form.text_one_remember }}
+            </div>
+
+            <div class="row">
+                <div class="title">Текст второго напоминания</div>
+                <div class="label">(последняя попытка)</div>
+                {{ form.text_two_remember }}
+            </div>
+
+
+            <div class="row">
+                <div class="title">Текущие данные от прокси</div>
+                <div class="proxy-grid">
+                    <div class="proxy-header">Host</div>
+                    <div class="proxy-header">Port</div>
+                    <div class="proxy-header">User</div>
+                    <div class="proxy-header">Passwd</div>
+
+                    {{ form.proxy_host }}
+                    {{ form.proxy_port }}
+                    {{ form.proxy_user }}
+                    {{ form.proxy_password }}
+                </div>
+            </div>
+
+            <button type="submit">Сохранить</button>
+        </form>
+    </div>
+
+    {% load static %}
+    <script src="{% static "main/js/resize.js" %}"></script>
+{% endblock content %}

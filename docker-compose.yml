@@ -1,0 +1,30 @@
+services:
+  web:
+    build:
+      context: ./order
+      dockerfile: Dockerfile
+    container_name: django_web
+    environment:
+      DJANGO_SETTINGS_MODULE: order.settings
+      DEBUG: "0"
+    ports:
+      - "8000:8000"
+    volumes:
+      - ./order/db.sqlite3:/app/order/db.sqlite3
+
+
+  bot:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: vk_bot
+#    volumes:
+#      - .:/app
+    environment:
+      VK_TOKEN: "2222q"
+#      GROUP_ID: "${GROUP_ID}"
+#      OPENAI_API_KEY: "${OPENAI_API_KEY}"
+    depends_on:
+      - web
+    volumes:
+      - ./order/db.sqlite3:/app/order/db.sqlite3
