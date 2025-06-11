@@ -42,40 +42,35 @@ class HistoryManager:
         return history
 
     def add_message(self, peer_id: int, message: Dict[str, str]):
-        """
-        Добавляет сообщение message ({"role": "...", "content": "..."}) в БД
-        и обрезает историю до последних max_history записей.
-        """
         role = message["role"]
         content = message["content"]
 
-        # Вставляем новую запись
-        self.cursor.execute("""
-            INSERT INTO dialog_history (peer_id, role, content)
-            VALUES (?, ?, ?)
-        """, (peer_id, role, content))
-        self.conn.commit()
+        # Обёртка in-transaction: автоматически BEGIN/COMMIT
+        with self.conn:
+            # Вставляем новую запись
+            self.conn.execute(
+                "INSERT INTO dialog_history(peer_id, role, content) VALUES (?, ?, ?)",
+                (peer_id, role, content)
+            )
 
-        # Проверяем, не превысило ли общее число записей max_history
-        total_count = self.cursor.execute("""
-            SELECT COUNT(*) FROM dialog_history WHERE peer_id = ?
-        """, (peer_id,)).fetchone()[0]
+            # Считаем, сколько записей стало
+            total_count = self.conn.execute(
+                "SELECT COUNT(*) FROM dialog_history WHERE peer_id = ?",
+                (peer_id,)
+            ).fetchone()[0]
 
-
-        if total_count > self.max_history:
-            overflow = total_count - self.max_history
-            # Удаляем избыточные старые записи по наименьшим id
-            self.cursor.execute("""
-                DELETE FROM dialog_history
-                WHERE id IN (
-                    SELECT id
-                    FROM dialog_history
-                    WHERE peer_id = ?
-                    ORDER BY id ASC
-                    LIMIT ?
-                )
-            """, (peer_id, overflow))
-            self.conn.commit()
+            if total_count > self.max_history:
+                overflow = total_count - self.max_history
+                # Удаляем старые записи в одной транзакции
+                self.conn.execute("""
+                    DELETE FROM dialog_history
+                    WHERE id IN (
+                        SELECT id FROM dialog_history
+                        WHERE peer_id = ?
+                        ORDER BY id ASC
+                        LIMIT ?
+                    )
+                """, (peer_id, overflow))
 
     def get_last_user_timestamp(self, peer_id: int) -> Optional[datetime]:
         self.cursor.execute("""
