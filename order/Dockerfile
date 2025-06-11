@@ -13,5 +13,5 @@ COPY . /app/order/
 RUN python manage.py migrate
 RUN python manage.py collectstatic --noinput
 
-CMD ["gunicorn", "order.wsgi:application", "--bind", "0.0.0.0:8000", "--workers", "2"]
+CMD ["gunicorn", "order.wsgi:application", "--bind", "0.0.0.0:5555", "--workers", "2"]
 
