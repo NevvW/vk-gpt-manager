@@ -72,6 +72,7 @@ def reminder_worker(vk, history_manager: HistoryManager):
 
 def send_delayed_message(vk, peer_id, message):
     # отправка ответа по истечении таймера
+    print(f"Отправка сообщения {peer_id} с {message}")
     vk.messages.send(
         peer_id=peer_id,
         message=message,
@@ -93,8 +94,9 @@ def keep_typing(vk, peer_id, duration, interval=4):
 def handle_new_message(vk, history_manager, settings, obj):
     peer_id = obj.get("peer_id")
     text = obj.get("text", "").strip()
-
+    print(obj)
     if peer_id is None or text == "" or history_manager.in_blacklist(peer_id):
+        print("ПОльзователь в чёрном списке")
         return
 
     # 1) Помечаем как прочитанное
@@ -131,9 +133,11 @@ def handle_new_message(vk, history_manager, settings, obj):
     )
 
     if assistant_entry["role"] == "MANAGER":
+        print("нужно позвать менеджера")
         history_manager.put_in_blacklist(peer_id, "manager")
         user = vk.users.get(user_ids=obj.get("from_id"))[0]
         create_bitrix_request(f"{user['first_name']} {user['last_name']} | VK")
+        send_delayed_message(vk, peer_id, "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию.")
         return
     else:
         history_manager.add_message(peer_id, assistant_entry)
@@ -176,7 +180,7 @@ def main():
                             # Обрабатываем каждое новое сообщение асинхронно
                             threading.Thread(
                                 target=handle_new_message,
-                                args=(vk, history_manager, settings, obj),
+                                args=(vk, history_manager, get_bot_settings(), obj),
                                 daemon=True
                             ).start()
             except requests.exceptions.ReadTimeout:

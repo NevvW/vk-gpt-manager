@@ -42,6 +42,7 @@ def load_products() -> pd.DataFrame:
     df['id'] = df.index.astype(str)
     df['name_hash'] = df['name'].apply(hash_text)
     df['price_hash'] = df['price'].astype(str).apply(hash_text)
+    df['description_hash'] = df['description'].astype(str).apply(hash_text)
     return df.set_index('id')
 
 
@@ -51,9 +52,10 @@ def load_metadata() -> pd.DataFrame:
         md = pd.read_csv(METADATA_CSV_PATH, dtype={'id': str})
         md['name_hash'] = md['name_hash'].astype(str)
         md['price_hash'] = md['price_hash'].astype(str)
+        md['description_hash'] = md['description_hash'].astype(str)
         return md.set_index('id')
     # Иначе создаём пустой DataFrame с индексом 'id'
-    cols = ['name', 'price', 'name_hash', 'price_hash']
+    cols = ['name', 'description', 'price', 'name_hash', 'description_hash', 'price_hash']
     df = pd.DataFrame(columns=cols)
     df.index.name = 'id'
     return df
@@ -96,6 +98,8 @@ def initialize_vectorization(proxy_host, proxy_port, proxy_user, proxy_password)
                 changes.append((pid, 'name_changed'))
             if row['price_hash'] != old['price_hash']:
                 changes.append((pid, 'price_changed'))
+            if row['description_hash'] != old['description_hash']:
+                changes.append((pid, 'description_changed'))
 
     if changes:
         rebuild_index = True
@@ -111,7 +115,7 @@ def initialize_vectorization(proxy_host, proxy_port, proxy_user, proxy_password)
         embs_list, ids = [], []
         for i in range(0, len(_products), EMBEDDING_BATCH_SIZE):
             batch = _products.iloc[i:i + EMBEDDING_BATCH_SIZE]
-            texts = batch['name'].tolist()
+            texts = (batch['name'].fillna('') + '. ' + batch['description'].fillna('')).tolist()
             embs_list.append(get_embedding_batch(texts))
             ids += batch.index.astype(int).tolist()
         embs_np = np.vstack(embs_list)
@@ -125,9 +129,9 @@ def initialize_vectorization(proxy_host, proxy_port, proxy_user, proxy_password)
     else:
         print("Loading existing FAISS index...")
         index = faiss.read_index(INDEX_PATH)
-
+    print("successful")
     # Сохраняем актуальные метаданные
-    _products[['name', 'price', 'name_hash', 'price_hash']].to_csv(METADATA_CSV_PATH)
+    _products[['name', 'description', 'price', 'name_hash', 'description_hash', 'price_hash']].to_csv(METADATA_CSV_PATH)
 
     if old_http is not None:
         os.environ["HTTP_PROXY"] = old_http
@@ -163,6 +167,7 @@ def get_gpt_response(history, user_message, system_prompt, proxy_host, proxy_por
     context = "\n\n".join(
         f"Товар {i + 1}:\n"
         f"Название: {row['name']}\n"
+        f"Описание: {row['description']}\n"
         f"Цена: {row['price']}\n"
         for i, row in retrieved.iterrows()
     )
@@ -190,7 +195,7 @@ def get_gpt_response(history, user_message, system_prompt, proxy_host, proxy_por
         response = client.chat.completions.create(
             model="gpt-3.5-turbo",
             messages=messages,
-            max_tokens=200,
+            max_tokens=400,
             temperature=0.3
         )
 
