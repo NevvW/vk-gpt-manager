@@ -1,3 +1,5 @@
+import sqlite3
+
 from django.shortcuts import render
 from django.shortcuts import get_object_or_404, redirect
 from .models import Bot
@@ -11,6 +13,21 @@ def index(request):
     bot = get_object_or_404(Bot, pk=1)
     if request.method == "POST":
         form = BotForm(request.POST)
+        print("get request")
+        if 'reset' in request.POST:
+            print("reset in request")
+            conn: sqlite3.Connection = sqlite3.connect("database.sqlt", check_same_thread=False)
+            cursor: sqlite3.Cursor = conn.cursor()
+
+            cursor.execute("DELETE FROM blacklist;")
+            cursor.execute("DELETE FROM dialog_history;")
+            cursor.execute("DELETE FROM reminder_status;")
+
+            conn.commit()
+            cursor.close()
+            conn.close()
+            return render(request, "index.html", {'form': form})
+
         if form.is_valid():
             bot.interval_first = form.cleaned_data['interval_first']
             bot.interval_second = form.cleaned_data['interval_second']

@@ -12,6 +12,7 @@ services:
       - "5555:5555"
     volumes:
       - ./order/db.sqlite3:/app/order/db.sqlite3
+      - ./database.sqlt:/app/order/database.sqlt
 
 
   bot:
