@@ -5,6 +5,7 @@ import time
 from datetime import datetime, timedelta
 
 import django
+import requests
 import vk_api
 from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 
@@ -167,15 +168,23 @@ def main():
         proxy_password=settings.proxy_password
     )
     try:
-        for event in longpoll.listen():
-                if event.type == VkBotEventType.MESSAGE_NEW:
-                    obj = event.obj.message or event.obj
-                    # Обрабатываем каждое новое сообщение асинхронно
-                    threading.Thread(
-                        target=handle_new_message,
-                        args=(vk, history_manager, settings, obj),
-                        daemon=True
-                    ).start()
+        while True:
+            try:
+                for event in longpoll.listen():
+                        if event.type == VkBotEventType.MESSAGE_NEW:
+                            obj = event.obj.message or event.obj
+                            # Обрабатываем каждое новое сообщение асинхронно
+                            threading.Thread(
+                                target=handle_new_message,
+                                args=(vk, history_manager, settings, obj),
+                                daemon=True
+                            ).start()
+            except requests.exceptions.ReadTimeout:
+                print("🔁 Таймаут VK. Повторное подключение...")
+                continue
+            except Exception as e:
+                print(f"❌ Ошибка longpoll: {e}")
+                time.sleep(3)
     except KeyboardInterrupt:
         print("Остановка бота... Закрываем соединение с БД.")
     finally:

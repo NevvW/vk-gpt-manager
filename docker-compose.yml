@@ -4,6 +4,7 @@ services:
       context: ./order
       dockerfile: Dockerfile
     container_name: django_web
+    restart: always
     environment:
       DJANGO_SETTINGS_MODULE: order.settings
       DEBUG: "0"
@@ -18,6 +19,7 @@ services:
       context: .
       dockerfile: Dockerfile
     container_name: vk_bot
+    restart: always
 #    volumes:
 #      - .:/app
     environment:
