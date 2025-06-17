@@ -6,7 +6,7 @@ df = pd.read_excel('gg.xlsx')
 df_cleaned = df.dropna(subset=['price'])
 
 # Сохраняем в CSV
-df_cleaned.to_csv("product.csv", index=False)
+df_cleaned.to_csv("products.csv", index=False)
 
 # # 2) Переименуем колонки для удобства
 # df = df.rename(columns={
