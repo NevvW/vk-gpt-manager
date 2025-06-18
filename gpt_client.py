@@ -145,12 +145,30 @@ def initialize_vectorization(proxy_host, proxy_port, proxy_user, proxy_password)
 
 
 # ---------- Retrieval ----------
+def get_conversation_embedding(history: list[dict], user_message: str) -> np.ndarray:
+    """
+    Собирает все user-сообщения из истории + текущее в одну строку
+    и возвращает единичный эмбеддинг.
+    """
+    # Берём только тексты сообщений, где роль — 'user'
+    user_texts = [m['content'] for m in history if m['role'] == 'user']
+    # Добавляем текущее сообщение
+    full_text = " ".join(user_texts + [user_message])
+    # Получаем эмбеддинг одной строкой
+    emb = get_embedding_batch([full_text])[0]  # shape (dim,)
+    return emb
 
-def retrieve_products(query: str, k: int = TOP_K) -> pd.DataFrame:
-    q_emb = get_embedding_batch([query])[0]
-    _, idxs = index.search(q_emb.reshape(1, -1), k)
-    return _products.iloc[idxs[0]].reset_index(drop=True)
-
+def retrieve_products_with_history(history: list[dict], user_message: str, k: int = TOP_K) -> pd.DataFrame:
+    """
+    Делает поиск по FAISS на основе эмбеддинга всей беседы + последнего вопроса.
+    """
+    q_emb = get_conversation_embedding(history, user_message)
+    # поиск возвращает (distances, indices)
+    distances, idxs = index.search(q_emb.reshape(1, -1), k)
+    # приводим к DataFrame
+    df = _products.iloc[idxs[0]].reset_index(drop=True)
+    df['distance'] = distances[0]
+    return df
 
 def get_gpt_response(history, user_message, system_prompt, proxy_host, proxy_port, proxy_user, proxy_password):
     """
@@ -163,7 +181,7 @@ def get_gpt_response(history, user_message, system_prompt, proxy_host, proxy_por
       assistant_content (str) — текст ответа GPT,
       assistant_entry (dict) — {"role": "assistant", "content": assistant_content}
     """
-    retrieved = retrieve_products(user_message)
+    retrieved = retrieve_products_with_history(history, user_message)
     context = "\n\n".join(
         f"Товар {i + 1}:\n"
         f"Название: {row['name']}\n"

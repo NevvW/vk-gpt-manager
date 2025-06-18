@@ -25,7 +25,7 @@ STATIC_ROOT = os.path.join(BASE_DIR, "static_collected")
 SECRET_KEY = 'django-insecure-9_4*t+5kj+5j(1r216m*2!bk^ao6j=!+3y&=j7)vcxon^&=n4='
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = ["87.251.66.140", "127.0.0.1", "217.114.0.218"]
 
@@ -72,7 +72,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'order.wsgi.application'
 
-
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
@@ -113,7 +112,6 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 
 USE_TZ = True
-
 
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/

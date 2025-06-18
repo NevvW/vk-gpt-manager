@@ -96,7 +96,7 @@ def handle_new_message(vk, history_manager, settings, obj):
     text = obj.get("text", "").strip()
     print(obj)
     if peer_id is None or text == "" or history_manager.in_blacklist(peer_id):
-        print("ПОльзователь в чёрном списке")
+        print("Пользователь в чёрном списке")
         return
 
     # 1) Помечаем как прочитанное

@@ -13,6 +13,7 @@ services:
     volumes:
       - ./order/db.sqlite3:/app/order/db.sqlite3
       - ./database.sqlt:/app/order/database.sqlt
+      - ./products:/app/order/products
 
 
   bot:
@@ -21,12 +22,6 @@ services:
       dockerfile: Dockerfile
     container_name: vk_bot
     restart: always
-#    volumes:
-#      - .:/app
-    environment:
-      VK_TOKEN: "2222q"
-#      GROUP_ID: "${GROUP_ID}"
-#      OPENAI_API_KEY: "${OPENAI_API_KEY}"
     depends_on:
       - web
     volumes:

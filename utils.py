@@ -4,7 +4,7 @@ from typing import List, Dict, Optional
 
 import requests
 
-from config import BITRIX_URL, BITRIX_WEBHOOK_KEY
+from config import BITRIX_WEBHOOK_KEY
 
 
 class HistoryManager:
@@ -147,16 +147,11 @@ class HistoryManager:
 
 
 def create_bitrix_request(name: str):
-    import requests
-
-    url = f'https://{BITRIX_URL}/rest/1/{BITRIX_WEBHOOK_KEY}/crm.deal.add.json'
+    url = f'https://{BITRIX_WEBHOOK_KEY}/crm.deal.add.json'
 
     params = {
         'fields[TITLE]': name,
         'fields[STAGE_ID]': 'NEW'
     }
 
-    response = requests.post(url, params=params)
-
-    # data = response.json()
-    # print(data)
+    requests.post(url, params=params)
