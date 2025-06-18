@@ -211,7 +211,7 @@ def get_gpt_response(history, user_message, system_prompt, proxy_host, proxy_por
     try:
         client = OpenAI(api_key=OPENAI_API_KEY)
         response = client.chat.completions.create(
-            model="gpt-3.5-turbo",
+            model="gpt-4o-mini",
             messages=messages,
             max_tokens=400,
             temperature=0.3
