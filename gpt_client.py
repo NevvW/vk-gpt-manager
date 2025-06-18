@@ -219,7 +219,7 @@ def get_gpt_response(history, user_message, system_prompt, proxy_host, proxy_por
 
         assistant_content = response.choices[0].message.content.strip()
         print("запрос закончен")
-        if "ПОЗОВИ МЕНЕДЖЕРА" in assistant_content:
+        if "bitrix" in assistant_content.lower():
             assistant_content = "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию."
             assistant_entry = {"role": "MANAGER", "content": assistant_content}
         else:
