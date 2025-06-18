@@ -9,6 +9,7 @@ df = df.rename(columns={
 })
 
 df = df[df['name'] != 'Наименование']
+df['price'] = df['price'].str.replace(r'-(?=\d+)', '.', regex=True)
 
 df_cleaned = df.dropna(subset=['price'])
 
