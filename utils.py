@@ -153,5 +153,8 @@ def create_bitrix_request(name: str):
         'fields[TITLE]': name,
         'fields[STAGE_ID]': 'NEW'
     }
-
-    requests.post(url, params=params)
+    try:
+        requests.post(url, params=params)
+    except Exception as e:
+        print("Запрос к битриксу не успешен")
+        print(e)
