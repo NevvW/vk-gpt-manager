@@ -1,0 +1,48 @@
+html{
+    width: 100%;
+    height: 100%;
+}
+
+body{
+    width: 100%;
+    height: 100%;
+    background-color: #e9f4f8;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+}
+
+form{
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 40px;
+    gap: 20px;
+}
+
+form table{
+    font-size: 30px;
+    gap: 10px;
+}
+
+form table tbody{
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+form input{
+    background-color: white;
+    border: none;
+    border-radius: 30px;
+    padding: 10px 10px;
+}
+
+form input[type="submit"]{
+    padding: 10px 40px;
+    font-size: 26px;
+    border: 1px solid #6facc9;
+    background-color: #e9f4f8;
+    color: #6facc9;
+}

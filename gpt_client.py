@@ -119,9 +119,9 @@ def initialize_vectorization(proxy_host, proxy_port, proxy_user, proxy_password)
             embs_list.append(get_embedding_batch(texts))
             ids += batch.index.astype(int).tolist()
         embs_np = np.vstack(embs_list)
+
+        faiss.normalize_L2(embs_np)
         dim = embs_np.shape[1]
-        # нормализуем эмбеддинги под inner-product (cosine-like) — опционально:
-        # faiss.normalize_L2(embs_np)
         base_index = faiss.IndexFlatL2(dim)
         index = faiss.IndexIDMap(base_index)
         index.add_with_ids(embs_np, np.array(ids, dtype=np.int64))

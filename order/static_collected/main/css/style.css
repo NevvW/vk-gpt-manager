@@ -1,0 +1,138 @@
+body {
+      font-family: Arial, sans-serif;
+      margin: 0;
+      background-color: #f4f4f4;
+    }
+
+    header {
+      background-color: #a5bafc;
+      height: 50px;
+      position: relative;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 30px auto;
+      padding: 20px;
+      background-color: white;
+      border-radius: 10px;
+    }
+
+    .row {
+      margin-bottom: 30px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+    }
+
+    .row-num {
+      margin-bottom: 30px;
+      border-bottom: 2px solid #000;
+      padding-bottom: 10px;
+      display: flex;
+      flex-direction: row;
+    }
+
+    .row:last-of-type {
+      border-bottom: none;
+    }
+
+    .label {
+      color: #666;
+      font-size: 0.9em;
+    }
+
+    .title {
+      font-weight: bold;
+      margin-bottom: 5px;
+    }
+
+    .value-box,
+    input[type="text"],
+    textarea, input[type="number"] {
+      background-color: #ddd;
+      padding: 10px;
+      border: none;
+      border-radius: 10px;
+      width: 100%;
+      box-sizing: border-box;
+      font-size: 1em;
+      resize: vertical;
+      -moz-appearance: textfield;
+    }
+
+    .value-box, input[type="text"], input[type="number"]{
+        text-align: center;
+    }
+
+    textarea{
+        margin-top: 20px;
+        resize: none;
+    }
+
+    .inline-boxes {
+      display: flex;
+      gap: 10px;
+      margin-left: auto;
+      display: flex;
+      flex-direction: row;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .inline-boxes input[type="number"] {
+      border-radius: 20px;
+      /* padding: 10px 20px; */
+      width: 80px !important;
+      text-align: center;
+      align-items: center;
+    }
+
+    .inline-boxes span{
+        display: flex;
+        justify-content: center;
+        align-items: center;
+    }
+
+    .proxy-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+      margin-top: 10px;
+    }
+
+    .proxy-header {
+      font-weight: bold;
+      text-align: center;
+    }
+
+    .logout-icon {
+      position: absolute;
+      right: 20px;
+      top: 10px;
+      width: 24px;
+      height: 24px;
+      background: url('../images/logout-1--arrow-exit-frame-leave-logout-rectangle-right.png') no-repeat center;
+      background-size: contain;
+    }
+
+    button {
+      margin-top: 20px;
+      margin-left: auto;
+      margin-right: auto;
+      padding: 10px 20px;
+      font-size: 1em;
+      border: none;
+      border-radius: 10px;
+      background-color: #4CAF50;
+      color: white;
+      cursor: pointer;
+    }
+
+    button:hover {
+      background-color: #45a049;
+    }
+
+    form{
+        display: flex;
+        flex-direction: column;
+    }
