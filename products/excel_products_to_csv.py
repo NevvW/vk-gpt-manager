@@ -14,4 +14,4 @@ def toCSV(file):
 
     df_cleaned = df.dropna(subset=['price'])
 
-    df_cleaned.to_csv("products.csv", index=False)
+    df_cleaned.to_csv("products/products.csv", index=False)
