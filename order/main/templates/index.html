@@ -9,7 +9,7 @@
         </a>
     </header>
     <div class="container">
-        <form action="" , method="post">
+        <form action="" , method="post" enctype="multipart/form-data">
             {% csrf_token %}
             <div class="row-num">
                 <div>
@@ -41,8 +41,14 @@
 
             <div class="row">
                 <div class="title">Данные для работы нейросети</div>
-                <div class="label">(цены, факт наличия, актуальные предложения)</div>
-                {{ form.promt }}
+                <div class="label">(цены, факт наличия, актуальные предложения) Последнее обновление: {{ change }}</div>
+                <div class="file-upload-wrapper">
+                <label class="file-upload-label">
+                    <span class="file-upload-button">Обзор...</span>
+                    <input type="file" name="promt" id="id_promt" accept=".xlsx">
+                    <span class="file-upload-filename" id="file-name">Файл не выбран.</span>
+                </label>
+                </div>
             </div>
 
             <div class="row">
@@ -92,4 +98,11 @@
 
     {% load static %}
     <script src="{% static "main/js/resize.js" %}"></script>
+    <script>
+    document.getElementById('id_promt').addEventListener('change', function () {
+        const fileName = this.files.length > 0 ? this.files[0].name : 'Файл не выбран.';
+        document.getElementById('file-name').textContent = fileName;
+    });
+    </script>
+
 {% endblock content %}

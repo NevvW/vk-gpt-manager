@@ -136,3 +136,36 @@ body {
         display: flex;
         flex-direction: column;
     }
+
+.file-upload-wrapper {
+  margin-top: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.file-upload-label {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+  cursor: pointer;
+  font-size: 1em;
+}
+
+.file-upload-button {
+  background-color: #ddd;
+  padding: 10px 20px;
+  border-radius: 10px;
+  font-weight: bold;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.file-upload-filename {
+  color: #555;
+  font-style: italic;
+}
+
+.file-upload-label input[type="file"] {
+  display: none;
+}

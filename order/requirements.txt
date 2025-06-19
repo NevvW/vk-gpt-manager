@@ -1,3 +1,5 @@
 Django~=5.2.2
 gunicorn
 whitenoise>=6.0
+pandas
+openpyxl
