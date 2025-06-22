@@ -28,3 +28,4 @@ services:
       - ./order/db.sqlite3:/app/order/db.sqlite3
       - ./products:/app/products
       - ./database.sqlt:/app/database.sqlt
+      - ./logs:/app/logs

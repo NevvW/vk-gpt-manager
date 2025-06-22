@@ -1,4 +1,7 @@
+import logging
+import os
 import sqlite3
+import sys
 from datetime import datetime
 from typing import List, Dict, Optional
 
@@ -6,6 +9,21 @@ import requests
 
 from config import BITRIX_WEBHOOK_KEY
 
+# Настройка логирования для модуля HistoryManager
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOG_DIR, 'bot.log')
+logger = logging.getLogger('utils')
+# Здесь лишь добавляем свой тег
+handler = logging.FileHandler(LOG_FILE, encoding='utf-8')
+consol_handler = logging.StreamHandler(sys.stdout)
+formatter = logging.Formatter("%(asctime)s [UTILS] %(levelname)s %(name)s: %(message)s", datefmt="%Y-%m-%d %H:%M:%S")
+handler.setFormatter(formatter)
+consol_handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.addHandler(consol_handler)
+logger.setLevel(logging.INFO)
 
 class HistoryManager:
     """
@@ -143,6 +161,8 @@ class HistoryManager:
         self.cursor.execute("""
         DELETE FROM reminder_status WHERE peer_id = ?""", (peer_id,))
 
+        logger.info(f"Пользователь {peer_id} теперь будет в ЧС по причине: {reason}")
+
         self.conn.commit()
 
 
@@ -156,5 +176,5 @@ def create_bitrix_request(name: str):
     try:
         requests.post(url, params=params)
     except Exception as e:
-        print("Запрос к битриксу не успешен")
-        print(e)
+        logger.error("Запрос к битриксу не успешен")
+        logger.error(e)

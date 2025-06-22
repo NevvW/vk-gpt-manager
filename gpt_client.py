@@ -1,4 +1,5 @@
 import hashlib
+import logging
 import os
 
 import faiss
@@ -16,7 +17,36 @@ EMBEDDING_MODEL = 'text-embedding-3-small'
 EMBEDDING_BATCH_SIZE = 100
 TOP_K = 5
 
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+LOG_DIR = os.path.join(BASE_DIR, 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOG_DIR, 'bot.log')
 
+file_handler = logging.FileHandler(
+    filename=LOG_FILE,
+    encoding='utf-8'
+)
+
+console_handler = logging.StreamHandler()
+
+formatter = logging.Formatter(
+    fmt='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[file_handler, console_handler]
+)
+logger = logging.getLogger('gpt')
+
+
+openai_client: OpenAI = None
+_products: pd.DataFrame = None
+_metadata: pd.DataFrame = None
+index = None
 # ---------- Proxy Helper ----------
 def configure_proxy(host: str, port: str, user: str, password: str) -> tuple[str | None, str | None]:
     """
@@ -82,12 +112,25 @@ def initialize_vectorization(proxy_host, proxy_port, proxy_user, proxy_password)
     old_http, old_https = configure_proxy(host=proxy_host, port=proxy_port, user=proxy_user, password=proxy_password)
     openai_client = OpenAI(api_key=OPENAI_API_KEY)
 
+    old_products = None
+    if _products is not None:
+        old_products = _products.copy()
     # Загружаем продукты и метаданные
     _products = load_products()
     _metadata = load_metadata()
 
+
     # 3) проверяем, есть ли изменения
     rebuild_index = False
+
+    if old_products is not None and old_products.shape != _products.shape:
+        logger.info("products не совпадает, перестроим индексы")
+        rebuild_index = True
+
+    if len(_products) != len(_metadata):
+        logger.info("products не совпадает с metadata, перестроим индексы")
+        rebuild_index = True
+
     changes = []
     for pid, row in _products.iterrows():
         if pid not in _metadata.index:
@@ -104,14 +147,14 @@ def initialize_vectorization(proxy_host, proxy_port, proxy_user, proxy_password)
     if changes:
         rebuild_index = True
         for pid, change in changes:
-            print(f"Product {pid}: {change}")
+            logger.info(f"Product {pid}: {change}")
     else:
-        print("No changes detected.")
+        logger.info("No changes detected.")
 
     # 4) строим или загружаем FAISS-индекс
     #    — если файла индекса нет, или если надо пересоздать (rebuild_index=True), мы перебираем все данные
     if rebuild_index or not os.path.exists(INDEX_PATH):
-        print("Rebuilding FAISS index from scratch...")
+        logger.info("Rebuilding FAISS index from scratch...")
         embs_list, ids = [], []
         for i in range(0, len(_products), EMBEDDING_BATCH_SIZE):
             batch = _products.iloc[i:i + EMBEDDING_BATCH_SIZE]
@@ -127,9 +170,9 @@ def initialize_vectorization(proxy_host, proxy_port, proxy_user, proxy_password)
         index.add_with_ids(embs_np, np.array(ids, dtype=np.int64))
         faiss.write_index(index, INDEX_PATH)
     else:
-        print("Loading existing FAISS index...")
+        logger.info("Loading existing FAISS index...")
         index = faiss.read_index(INDEX_PATH)
-    print("successful")
+    logger.info("successful")
     # Сохраняем актуальные метаданные
     _products[['name', 'description', 'price', 'name_hash', 'description_hash', 'price_hash']].to_csv(METADATA_CSV_PATH)
 
@@ -158,6 +201,7 @@ def get_conversation_embedding(history: list[dict], user_message: str) -> np.nda
     emb = get_embedding_batch([full_text])[0]  # shape (dim,)
     return emb
 
+
 def retrieve_products_with_history(history: list[dict], user_message: str, k: int = TOP_K) -> pd.DataFrame:
     """
     Делает поиск по FAISS на основе эмбеддинга всей беседы + последнего вопроса.
@@ -169,6 +213,7 @@ def retrieve_products_with_history(history: list[dict], user_message: str, k: in
     df = _products.iloc[idxs[0]].reset_index(drop=True)
     df['distance'] = distances[0]
     return df
+
 
 def get_gpt_response(history, user_message, system_prompt, proxy_host, proxy_port, proxy_user, proxy_password):
     """
@@ -192,11 +237,11 @@ def get_gpt_response(history, user_message, system_prompt, proxy_host, proxy_por
     # объединяем базовый системный промпт и контекст товаров
     sales_prompt = f"{system_prompt}\n\nИнформация по релевантным товарам:\n{context}"
 
-    print("щас будет запрос к гпт")
+    logger.info("щас будет запрос к гпт")
     messages = [{"role": "system", "content": sales_prompt}]
     messages.extend(history)
     messages.append({"role": "user", "content": user_message})
-    print(messages)
+    logger.info(messages)
     # Формируем URL прокси
     proxy_url = f"http://{proxy_user}:{proxy_password}@{proxy_host}:{proxy_port}"
 
@@ -218,7 +263,7 @@ def get_gpt_response(history, user_message, system_prompt, proxy_host, proxy_por
         )
 
         assistant_content = response.choices[0].message.content.strip()
-        print("запрос закончен")
+        logger.info("запрос закончен")
         if "bitrix" in assistant_content.lower():
             assistant_content = "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию."
             assistant_entry = {"role": "MANAGER", "content": assistant_content}

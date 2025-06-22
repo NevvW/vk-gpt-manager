@@ -1,3 +1,4 @@
+import logging
 import os
 import sys
 import threading
@@ -12,6 +13,35 @@ from vk_api.bot_longpoll import VkBotLongPoll, VkBotEventType
 from config import VK_TOKEN, GROUP_ID
 from gpt_client import get_gpt_response, initialize_vectorization
 from utils import HistoryManager, create_bitrix_request
+
+# Инициализация логирования
+LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
+os.makedirs(LOG_DIR, exist_ok=True)
+LOG_FILE = os.path.join(LOG_DIR, 'bot.log')
+
+file_handler = logging.FileHandler(
+    filename=LOG_FILE,
+    encoding='utf-8'
+)
+
+# Создаём хендлер для консоли
+console_handler = logging.StreamHandler()
+
+# Общий форматтер
+formatter = logging.Formatter(
+    fmt='%(asctime)s [%(levelname)s] %(name)s: %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+file_handler.setFormatter(formatter)
+console_handler.setFormatter(formatter)
+
+# Настраиваем basicConfig через аргумент handlers
+logging.basicConfig(
+    level=logging.INFO,
+    handlers=[file_handler, console_handler]
+)
+
+logger = logging.getLogger(__name__)
 
 project_root = os.path.dirname(os.path.abspath(__file__))
 
@@ -34,45 +64,50 @@ def get_bot_settings() -> Bot:
 
 
 def reminder_worker(vk, history_manager: HistoryManager):
-    print("Reminder worker started")
+    logger.info("Reminder worker started")
     while True:
-        history_manager.cursor.execute("""
-            SELECT DISTINCT peer_id FROM dialog_history
-        """)
-        peer_ids = [row[0] for row in history_manager.cursor.fetchall()]
+        try:
+            history_manager.cursor.execute("""
+                SELECT DISTINCT peer_id FROM dialog_history
+            """)
+            peer_ids = [row[0] for row in history_manager.cursor.fetchall()]
 
-        now = datetime.utcnow()
-        settings = get_bot_settings()
+            now = datetime.utcnow()
+            settings = get_bot_settings()
 
-        REMINDER1_DELAY = settings.interval_first * 60 * 60
-        REMINDER2_DELAY = settings.interval_second * 60 * 60
-        reminder_text = settings.text_one_remember  # используем поле promt для первого напоминания
-        final_text = settings.text_two_remember
-        for peer_id in peer_ids:
-            stage = history_manager.get_stage(peer_id)
-            if stage >= 2:
-                continue
+            REMINDER1_DELAY = settings.interval_first * 60 * 60
+            REMINDER2_DELAY = settings.interval_second * 60 * 60
+            reminder_text = settings.text_one_remember  # используем поле promt для первого напоминания
+            final_text = settings.text_two_remember
+            for peer_id in peer_ids:
+                try:
+                    stage = history_manager.get_stage(peer_id)
+                    if stage >= 2:
+                        continue
 
-            last_user_ts = history_manager.get_last_user_timestamp(peer_id)
-            if not last_user_ts:
-                continue
+                    last_user_ts = history_manager.get_last_user_timestamp(peer_id)
+                    if not last_user_ts:
+                        continue
 
-            elapsed = now - last_user_ts
+                    elapsed = now - last_user_ts
 
-            if stage == 0 and elapsed >= timedelta(seconds=REMINDER1_DELAY):
-                vk.messages.send(peer_id=peer_id, message=reminder_text, random_id=0)
-                history_manager.set_stage(peer_id, 1)
+                    if stage == 0 and elapsed >= timedelta(seconds=REMINDER1_DELAY):
+                        vk.messages.send(peer_id=peer_id, message=reminder_text, random_id=0)
+                        history_manager.set_stage(peer_id, 1)
 
-            elif stage == 1 and elapsed >= timedelta(seconds=REMINDER2_DELAY):
-                vk.messages.send(peer_id=peer_id, message=final_text, random_id=0)
-                history_manager.set_stage(peer_id, 2)
+                    elif stage == 1 and elapsed >= timedelta(seconds=REMINDER2_DELAY):
+                        vk.messages.send(peer_id=peer_id, message=final_text, random_id=0)
+                        history_manager.set_stage(peer_id, 2)
+                except Exception as e:
+                    logger.error(f"Error in reminder_worker for {peer_id}: {e}")
+        except Exception as e:
+            logger.error(f"Error in reminder_worker: {e}")
 
         time.sleep(10)
 
-
 def send_delayed_message(vk, peer_id, message):
     # отправка ответа по истечении таймера
-    print(f"Отправка сообщения {peer_id} с {message}")
+    logger.info(f"Отправка сообщения {peer_id} с {message}")
     vk.messages.send(
         peer_id=peer_id,
         message=message,
@@ -94,9 +129,36 @@ def keep_typing(vk, peer_id, duration, interval=4):
 def handle_new_message(vk, history_manager, settings, obj):
     peer_id = obj.get("peer_id")
     text = obj.get("text", "").strip()
-    print(obj)
-    if peer_id is None or text == "" or history_manager.in_blacklist(peer_id):
-        print("Пользователь в чёрном списке")
+    attachments = obj.get("attachments", [])
+    logger.info(obj)
+    logger.info(f"TEXT: {text}")
+    if peer_id is None:
+        logger.error("peer_id не удалось получить из сообщения")
+
+    if history_manager.in_blacklist(peer_id):
+        logger.info("Пользователь в чёрном списке")
+        return
+
+    # Если есть вложения в сообщении, сразу звать менеджера
+    if attachments:
+        logger.info("Обнаружены вложения, вызываем менеджера")
+        send_manager(history_manager, obj, peer_id, vk)
+        return
+
+    if text == "":
+        logger.info("Сообщение пустое, запрос не будет обработан")
+        return
+    global last_excel_change
+
+    if settings.last_change != last_excel_change:
+        send_manager(history_manager, obj, peer_id, vk, "Прямо сейчас мы обновляем наш каталог товаров. Вам ответит первый освободившийся менеджер!")
+        initialize_vectorization(
+            proxy_host=settings.proxy_host,
+            proxy_port=settings.proxy_port,
+            proxy_user=settings.proxy_user,
+            proxy_password=settings.proxy_password
+        )
+        last_excel_change = settings.last_change
         return
 
     # 1) Помечаем как прочитанное
@@ -133,11 +195,13 @@ def handle_new_message(vk, history_manager, settings, obj):
     )
 
     if assistant_entry["role"] == "MANAGER":
-        print("нужно позвать менеджера")
-        history_manager.put_in_blacklist(peer_id, "manager")
-        user = vk.users.get(user_ids=obj.get("from_id"))[0]
-        create_bitrix_request(f"{user['first_name']} {user['last_name']} | VK")
-        send_delayed_message(vk, peer_id, "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию.")
+        logger.warning("нужно позвать менеджера")
+        send_manager(history_manager, obj, peer_id, vk)
+
+        # history_manager.put_in_blacklist(peer_id, "manager")
+        # user = vk.users.get(user_ids=obj.get("from_id"))[0]
+        # create_bitrix_request(f"{user['first_name']} {user['last_name']} | VK")
+        # send_delayed_message(vk, peer_id, "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию.")
         return
     else:
         history_manager.add_message(peer_id, assistant_entry)
@@ -152,14 +216,22 @@ def handle_new_message(vk, history_manager, settings, obj):
     timer.start()
 
 
+def send_manager(history_manager, obj, peer_id, vk, message: str = "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию."):
+    history_manager.put_in_blacklist(peer_id, "manager")
+    user = vk.users.get(user_ids=obj.get("from_id"))[0]
+    create_bitrix_request(f"{user['first_name']} {user['last_name']} | VK ")
+    send_delayed_message(vk, peer_id, message)
+
+last_excel_change = None
+
 def main():
     vk_session = vk_api.VkApi(token=VK_TOKEN)
     longpoll = VkBotLongPoll(vk_session, group_id=GROUP_ID)
     vk = vk_session.get_api()
     history_manager = HistoryManager(max_history_length=10)
 
-    print("Бот запущен... Ожидание сообщений.")
-    # (если у вас есть reminder_worker — оставляем его)
+    logger.info("Бот запущен... Ожидание сообщений.")
+
     threading.Thread(target=reminder_worker,
                      args=(vk, history_manager),
                      daemon=True).start()
@@ -171,6 +243,10 @@ def main():
         proxy_user=settings.proxy_user,
         proxy_password=settings.proxy_password
     )
+
+    global last_excel_change
+    last_excel_change = settings.last_change
+
     try:
         while True:
             try:
@@ -184,13 +260,13 @@ def main():
                                 daemon=True
                             ).start()
             except requests.exceptions.ReadTimeout:
-                print("🔁 Таймаут VK. Повторное подключение...")
+                logger.warning("🔁 Таймаут VK. Повторное подключение...")
                 continue
             except Exception as e:
-                print(f"❌ Ошибка longpoll: {e}")
+                logger.error(f"❌ Ошибка longpoll: {e}")
                 time.sleep(3)
     except KeyboardInterrupt:
-        print("Остановка бота... Закрываем соединение с БД.")
+        logger.error("Остановка бота... Закрываем соединение с БД.")
     finally:
         history_manager.close()
 
