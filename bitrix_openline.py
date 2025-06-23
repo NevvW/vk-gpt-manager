@@ -104,12 +104,6 @@ def is_text_only(form):
         logger.info(f"{dialog_id} Загрузили файл")
         return False
 
-    # 4) Проверка репостов (MESSAGE_ORIGINAL)
-    if data.get('data[PARAMS][MESSAGE_ORIGINAL]', '').strip():
-        send_manager(dialog_id)
-        logger.info(f"{dialog_id} Репост")
-        return False
-
     # 5) Проверка rich previews и URL-репортов (ATTACH и URL_ATTACH)
     if any(key.startswith('data[PARAMS][PARAMS][ATTACH]') for key in data) or \
             any(key.startswith('data[PARAMS][URL_ATTACH]') for key in data):
