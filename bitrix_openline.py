@@ -190,6 +190,8 @@ def webhook_handler():
         else:
             history_manager.add_message(dialog_id, assistant_entry)
 
+        send_delayed_message(dialog_id, assistant_content)
+
     return jsonify({'ERROR': 0, 'RESULT': 'ok'})
 
 
