@@ -11,7 +11,7 @@ from flask import Flask, request, jsonify, current_app
 
 from config import INCOMING_WEBHOOK_URL, CLIENT_ID
 from gpt_client import initialize_vectorization, get_gpt_response
-from utils import HistoryManager, create_bitrix_request
+from utils import HistoryManager
 
 app = Flask(__name__)
 
@@ -81,6 +81,7 @@ def bitrix_call(method, params):
             current_app.logger.error(f"Bitrix24 error: {result}")
     return resp
 
+
 def is_text_only(form):
     """
     Возвращает True, если в форме только текстовое сообщение,
@@ -97,7 +98,7 @@ def is_text_only(form):
 
     # 3) Проверка файлов (FILE_ID и FILES)
     if form.getlist('data[PARAMS][PARAMS][FILE_ID]') or \
-       any(key.startswith('data[PARAMS][FILES]') for key in data):
+            any(key.startswith('data[PARAMS][FILES]') for key in data):
         send_manager(dialog_id)
         return False
 
@@ -108,7 +109,7 @@ def is_text_only(form):
 
     # 5) Проверка rich previews и URL-репортов (ATTACH и URL_ATTACH)
     if any(key.startswith('data[PARAMS][PARAMS][ATTACH]') for key in data) or \
-       any(key.startswith('data[PARAMS][URL_ATTACH]') for key in data):
+            any(key.startswith('data[PARAMS][URL_ATTACH]') for key in data):
         send_manager(dialog_id)
         return False
 
@@ -190,9 +191,11 @@ def webhook_handler():
 
     return jsonify({'ERROR': 0, 'RESULT': 'ok'})
 
-def send_manager(dialog_id:str, message: str = "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию."):
+
+def send_manager(dialog_id: str,
+                 message: str = "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию."):
     history_manager.put_in_blacklist(int(dialog_id), "manager")
-    create_bitrix_request(dialog_id.replace("chat",""))
+    create_bitrix_request(dialog_id.replace("chat", ""))
     send_delayed_message(dialog_id, message)
 
 
@@ -203,6 +206,7 @@ def send_delayed_message(dialog_id, message):
         'MESSAGE': message,
         'CLIENT_ID': CLIENT_ID,
     })
+
 
 def reminder_worker(history_manager: HistoryManager):
     logger.info("Reminder worker started")
@@ -250,6 +254,13 @@ def reminder_worker(history_manager: HistoryManager):
         time.sleep(10)
 
 
+def create_bitrix_request(chat_id):
+    bitrix_call("imopenlines.bot.session.operator", {
+        "CHAT_ID": chat_id,
+        "CLIENT_ID": CLIENT_ID,
+    })
+
+
 if __name__ == '__main__':
     global history_manager
     history_manager = HistoryManager(max_history_length=10)
@@ -258,7 +269,6 @@ if __name__ == '__main__':
     threading.Thread(target=reminder_worker,
                      args=(history_manager,),
                      daemon=True).start()
-
 
     settings = get_bot_settings()
     initialize_vectorization(

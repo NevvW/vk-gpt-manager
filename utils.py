@@ -5,11 +5,6 @@ import sys
 from datetime import datetime
 from typing import List, Dict, Optional
 
-import requests
-
-from bitrix_openline import bitrix_call
-from config import BITRIX_WEBHOOK_KEY, CLIENT_ID
-
 # Настройка логирования для модуля HistoryManager
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 LOG_DIR = os.path.join(BASE_DIR, 'logs')
@@ -25,6 +20,7 @@ consol_handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.addHandler(consol_handler)
 logger.setLevel(logging.INFO)
+
 
 class HistoryManager:
     """
@@ -165,15 +161,6 @@ class HistoryManager:
         logger.info(f"Пользователь {peer_id} теперь будет в ЧС по причине: {reason}")
 
         self.conn.commit()
-
-
-def create_bitrix_request(chat_id):
-
-    bitrix_call("imopenlines.bot.session.operator", {
-        "CHAT_ID": chat_id,
-        "CLIENT_ID": CLIENT_ID,
-    })
-
 
     # url = f'https://{BITRIX_WEBHOOK_KEY}/crm.deal.add.json'
     #
