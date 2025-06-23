@@ -11,7 +11,4 @@ RUN pip install -r requirements.txt
 
 COPY . .
 
-#CMD ["sh","-c","sleep 100000"]
-#ENV DJANGO_SETTINGS_MODULE=order.settings
-
-CMD ["python", "vk_bot.py"]
+CMD ["python", "bitrix_openline.py"]

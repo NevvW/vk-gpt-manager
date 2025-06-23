@@ -7,7 +7,8 @@ from typing import List, Dict, Optional
 
 import requests
 
-from config import BITRIX_WEBHOOK_KEY
+from bitrix_openline import bitrix_call
+from config import BITRIX_WEBHOOK_KEY, CLIENT_ID
 
 # Настройка логирования для модуля HistoryManager
 BASE_DIR = os.path.dirname(os.path.abspath(__file__))
@@ -166,15 +167,22 @@ class HistoryManager:
         self.conn.commit()
 
 
-def create_bitrix_request(name: str):
-    url = f'https://{BITRIX_WEBHOOK_KEY}/crm.deal.add.json'
+def create_bitrix_request(chat_id):
 
-    params = {
-        'fields[TITLE]': name,
-        'fields[STAGE_ID]': 'NEW'
-    }
-    try:
-        requests.post(url, params=params)
-    except Exception as e:
-        logger.error("Запрос к битриксу не успешен")
-        logger.error(e)
+    bitrix_call("imopenlines.bot.session.operator", {
+        "CHAT_ID": chat_id,
+        "CLIENT_ID": CLIENT_ID,
+    })
+
+
+    # url = f'https://{BITRIX_WEBHOOK_KEY}/crm.deal.add.json'
+    #
+    # params = {
+    #     'fields[TITLE]': name,
+    #     'fields[STAGE_ID]': 'NEW'
+    # }
+    # try:
+    #     requests.post(url, params=params)
+    # except Exception as e:
+    #     logger.error("Запрос к битриксу не успешен")
+    #     logger.error(e)
