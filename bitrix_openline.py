@@ -141,7 +141,7 @@ def webhook_handler():
     text = data_from_form.get('data[PARAMS][MESSAGE]')
 
     if event == 'ONIMBOTMESSAGEADD':
-        if dialog_id in None:
+        if dialog_id is None:
             logger.error("dialog_id не удалось получить из сообщения")
             return
 
