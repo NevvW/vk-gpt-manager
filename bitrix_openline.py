@@ -88,34 +88,41 @@ def is_text_only(form):
     без файлов, репостов, превью и системных уведомлений.
     """
     data = form.to_dict()
-
     dialog_id = data.get('data[PARAMS][DIALOG_ID]')
+    logger.debug(f"{dialog_id} Проверяем текст сообщения")
 
     # 2) Проверка наличия текста
     text = data.get('data[PARAMS][MESSAGE]', '').strip()
     if not text:
+        logger.info(f"{dialog_id} Текста нет")
         return False
 
     # 3) Проверка файлов (FILE_ID и FILES)
     if form.getlist('data[PARAMS][PARAMS][FILE_ID]') or \
             any(key.startswith('data[PARAMS][FILES]') for key in data):
         send_manager(dialog_id)
+        logger.info(f"{dialog_id} Загрузили файл")
         return False
 
     # 4) Проверка репостов (MESSAGE_ORIGINAL)
     if data.get('data[PARAMS][MESSAGE_ORIGINAL]', '').strip():
         send_manager(dialog_id)
+        logger.info(f"{dialog_id} Репост")
         return False
 
     # 5) Проверка rich previews и URL-репортов (ATTACH и URL_ATTACH)
     if any(key.startswith('data[PARAMS][PARAMS][ATTACH]') for key in data) or \
             any(key.startswith('data[PARAMS][URL_ATTACH]') for key in data):
         send_manager(dialog_id)
+        logger.info(f"{dialog_id} Ссылка")
         return False
 
     # 6) Служебные сообщения (SYSTEM)
     if data.get('data[PARAMS][SYSTEM]') == 'Y':
+        logger.info(f"{dialog_id} Служебное сообщение")
         return False
+
+    logger.debug(f"{dialog_id} Текст отличный")
 
     return True
 

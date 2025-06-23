@@ -22,6 +22,8 @@ services:
       dockerfile: Dockerfile
     container_name: vk_bot
     restart: always
+    ports:
+      - "5000:5000"
     depends_on:
       - web
     volumes:
