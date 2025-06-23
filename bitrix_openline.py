@@ -122,12 +122,12 @@ def is_text_only(form):
 
 @app.route('/', methods=['POST'])
 def webhook_handler():
-    print("Запрос от Bitrix24")
+    logger.info("Запрос от Bitrix24")
     data_from_form = request.form.to_dict()
-    print(request.form)
-    print('------------------')
+    logger.info(request.form)
+    logger.info('------------------')
     event = data_from_form.get('event')
-    print(f"Событие: {event}")
+    logger.info(f"Событие: {event}")
 
     # Общие переменные
     dialog_id = data_from_form.get('data[PARAMS][DIALOG_ID]')
