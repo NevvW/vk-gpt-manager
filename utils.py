@@ -34,7 +34,7 @@ class HistoryManager:
         self.conn: sqlite3.Connection = sqlite3.connect(self.db_path, check_same_thread=False)
         self.cursor: sqlite3.Cursor = self.conn.cursor()
 
-    def get_history(self, peer_id: int) -> List[Dict[str, str]]:
+    def get_history(self, peer_id: str) -> List[Dict[str, str]]:
         """
         Возвращает список реплик для данного диалога (peer_id):
           [
@@ -56,7 +56,7 @@ class HistoryManager:
         history = [{"role": row[0], "content": row[1]} for row in rows]
         return history
 
-    def add_message(self, peer_id: int, message: Dict[str, str]):
+    def add_message(self, peer_id: str, message: Dict[str, str]):
         role = message["role"]
         content = message["content"]
 
@@ -87,7 +87,7 @@ class HistoryManager:
                     )
                 """, (peer_id, overflow))
 
-    def get_last_user_timestamp(self, peer_id: int) -> Optional[datetime]:
+    def get_last_user_timestamp(self, peer_id: str) -> Optional[datetime]:
         self.cursor.execute("""
             SELECT timestamp
             FROM dialog_history
@@ -100,7 +100,7 @@ class HistoryManager:
             return datetime.fromisoformat(row[0])
         return None
 
-    def get_stage(self, peer_id: int) -> int:
+    def get_stage(self, peer_id: str) -> int:
         self.cursor.execute("""
             SELECT stage
             FROM reminder_status
@@ -109,7 +109,7 @@ class HistoryManager:
         row = self.cursor.fetchone()
         return row[0] if row else 0
 
-    def set_stage(self, peer_id: int, stage: int):
+    def set_stage(self, peer_id: str, stage: int):
         """
         Устанавливает этап напоминаний для peer_id. stage ∈ {0, 1, 2}.
         """
@@ -132,7 +132,7 @@ class HistoryManager:
 
         self.conn.commit()
 
-    def reset_stage(self, peer_id: int):
+    def reset_stage(self, peer_id: str):
         self.cursor.execute("""
             DELETE FROM reminder_status
             WHERE peer_id = ?
@@ -142,13 +142,13 @@ class HistoryManager:
     def close(self):
         self.conn.close()
 
-    def in_blacklist(self, peer_id: int) -> bool:
+    def in_blacklist(self, peer_id: str) -> bool:
         self.cursor.execute("""
         SELECT * FROM blacklist WHERE peer_id = ?""", (peer_id,))
         exists = self.cursor.fetchone() is not None
         return exists
 
-    def put_in_blacklist(self, peer_id: int, reason: str):
+    def put_in_blacklist(self, peer_id: str, reason: str):
         self.cursor.execute("""
         INSERT INTO blacklist (peer_id, reason) VALUES (?, ?)""", (peer_id, reason))
 

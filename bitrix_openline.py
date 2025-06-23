@@ -145,7 +145,7 @@ def webhook_handler():
             logger.error("dialog_id не удалось получить из сообщения")
             return
 
-        if history_manager.in_blacklist(int(dialog_id)):
+        if history_manager.in_blacklist(dialog_id):
             logger.info("Пользователь в чёрном списке")
             return
 
@@ -169,15 +169,15 @@ def webhook_handler():
             last_excel_change = settings.last_change
             return
 
-        history_manager.set_stage(int(dialog_id), 0)
+        history_manager.set_stage(dialog_id, 0)
 
         ban_list = [w.strip() for w in settings.ban_word.split(",") if w.strip()]
         if any(bw in text for bw in ban_list):
-            history_manager.put_in_blacklist(int(dialog_id), "ban_word")
+            history_manager.put_in_blacklist(dialog_id, "ban_word")
             return
 
-        history = history_manager.get_history(int(dialog_id))
-        history_manager.add_message(int(dialog_id), {"role": "user", "content": text})
+        history = history_manager.get_history(dialog_id)
+        history_manager.add_message(dialog_id, {"role": "user", "content": text})
 
         assistant_content, assistant_entry = get_gpt_response(
             history,
@@ -194,14 +194,14 @@ def webhook_handler():
             send_manager(dialog_id)
             return
         else:
-            history_manager.add_message(int(dialog_id), assistant_entry)
+            history_manager.add_message(dialog_id, assistant_entry)
 
     return jsonify({'ERROR': 0, 'RESULT': 'ok'})
 
 
 def send_manager(dialog_id: str,
                  message: str = "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию."):
-    history_manager.put_in_blacklist(int(dialog_id), "manager")
+    history_manager.put_in_blacklist(dialog_id, "manager")
     create_bitrix_request(dialog_id.replace("chat", ""))
     send_delayed_message(dialog_id, message)
 
