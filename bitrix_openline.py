@@ -110,6 +110,12 @@ def is_text_only(form):
         logger.info(f"{dialog_id} Ссылка")
         return False
 
+    lower_text = text.lower()
+    if "url" in lower_text or "http" in lower_text:
+        send_manager(dialog_id)
+        logger.info(f"{dialog_id} Ссылка прям ссылка")
+        return False
+
     # 6) Служебные сообщения (SYSTEM)
     if data.get('data[PARAMS][SYSTEM]') == 'Y':
         logger.info(f"{dialog_id} Служебное сообщение")
