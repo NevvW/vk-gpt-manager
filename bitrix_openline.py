@@ -68,7 +68,7 @@ def get_bot_settings() -> Bot:
 # HTTP-вызов методов Bitrix24 через Webhook
 def bitrix_call(method, params):
     url = f"{INCOMING_WEBHOOK_URL}/{method}"
-    current_app.logger.debug(f"Calling {url} with {params}")
+    logger.debug(f"Calling {url} with {params}")
     resp = requests.post(url, data=params)
     print(params)
     print(url)
