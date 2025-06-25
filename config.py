@@ -13,3 +13,5 @@ OPENAI_API_KEY = "sk-proj-Ep8DtzVBCDu-cOd1TMbwJ0Ch_eAkSI-AS3UN6MRxVvRwxWJDcq3zBv
 INCOMING_WEBHOOK_URL = 'https://b24-cflmos.bitrix24.ru/rest/1/2j7ofzkb1sy17jbk/'.rstrip('/')  # без слеша на конце
 
 CLIENT_ID = '5zzdd3pdwglagll0hitsmp5yznohhalz'
+
+BOT_ID = 8

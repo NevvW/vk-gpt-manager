@@ -9,13 +9,12 @@ import django
 import requests
 from flask import Flask, request, jsonify, current_app
 
-from config import INCOMING_WEBHOOK_URL, CLIENT_ID
+from config import INCOMING_WEBHOOK_URL, CLIENT_ID, BOT_ID
 from gpt_client import initialize_vectorization, get_gpt_response
 from utils import HistoryManager
 
 app = Flask(__name__)
 
-BOT_ID = 14
 
 # Инициализация логирования
 LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
