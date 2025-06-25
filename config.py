@@ -10,6 +10,6 @@ OPENAI_API_KEY = "sk-proj-Ep8DtzVBCDu-cOd1TMbwJ0Ch_eAkSI-AS3UN6MRxVvRwxWJDcq3zBv
 # BITRIX_WEBHOOK_KEY = "estetik24.bitrix24.ru/rest/23/37rura7004vgep7c/"
 
 # Конфигурация для
-INCOMING_WEBHOOK_URL = 'https://b24-5vzokb.bitrix24.ru/rest/1/s1e521lroolnsem5/'.rstrip('/')  # без слеша на конце
+INCOMING_WEBHOOK_URL = 'https://b24-cflmos.bitrix24.ru/rest/1/2j7ofzkb1sy17jbk/'.rstrip('/')  # без слеша на конце
 
-CLIENT_ID = 'ysb07pis7s7wgp49pt63zyxxkd9x781o'
+CLIENT_ID = '5zzdd3pdwglagll0hitsmp5yznohhalz'

@@ -198,8 +198,8 @@ def webhook_handler():
 def send_manager(dialog_id: str,
                  message: str = "Отлично, я Вас понял! Скоро подключится менеджер и продолжит консультацию."):
     history_manager.put_in_blacklist(dialog_id, "manager")
-    create_bitrix_request(dialog_id.replace("chat", ""))
     send_delayed_message(dialog_id, message)
+    create_bitrix_request(dialog_id.replace("chat", ""))
 
 
 def send_delayed_message(dialog_id, message):
