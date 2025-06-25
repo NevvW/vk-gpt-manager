@@ -4,6 +4,7 @@ import sys
 import threading
 import time
 from datetime import datetime, timedelta
+from functools import wraps
 
 import django
 import requests
@@ -14,7 +15,6 @@ from gpt_client import initialize_vectorization, get_gpt_response
 from utils import HistoryManager
 
 app = Flask(__name__)
-
 
 # Инициализация логирования
 LOG_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'logs')
@@ -120,7 +120,17 @@ def is_text_only(form):
     return True
 
 
+def always_ok(f):
+    @wraps(f)
+    def wrapper(*args, **kwargs):
+        f(*args, **kwargs)
+        return jsonify({'ERROR': 0, 'RESULT': 'ok'})
+
+    return wrapper
+
+
 @app.route('/', methods=['POST'])
+@always_ok
 def webhook_handler():
     logger.info("Запрос от Bitrix24")
     data_from_form = request.form.to_dict()
