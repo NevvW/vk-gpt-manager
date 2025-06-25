@@ -205,7 +205,13 @@ def webhook_handler():
         else:
             history_manager.add_message(dialog_id, assistant_entry)
 
-        send_delayed_message(dialog_id, assistant_content)
+        thread = threading.Timer(
+            function=send_delayed_message,
+            interval=30,
+            args=(dialog_id, assistant_content),
+        )
+        thread.daemon = True
+        thread.start()
 
     return jsonify({'ERROR': 0, 'RESULT': 'ok'})
 
@@ -299,4 +305,4 @@ if __name__ == '__main__':
     global last_excel_change
     last_excel_change = settings.last_change
 
-    app.run(host='0.0.0.0', port=5000)
+    app.run(host='0.0.0.0', port=5000, threaded=True)
