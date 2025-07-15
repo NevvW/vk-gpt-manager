@@ -272,6 +272,7 @@ def reminder_worker(history_manager: HistoryManager):
                         history_manager.set_stage(dialog_id, 2)
                 except Exception as e:
                     logger.error(f"Error in reminder_worker for {dialog_id}: {e}")
+                    history_manager.put_in_blacklist(dialog_id, "no_access")
         except Exception as e:
             logger.error(f"Error in reminder_worker: {e}")
 
